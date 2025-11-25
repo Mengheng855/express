@@ -23,22 +23,27 @@ export const getUser=async(req,res)=>{
         })
     }
 }
-export const addUser=async(req,res)=>{
+export const addUser = async (req, res) => {
     try {
-        const {name,email,password}=req.body
-        const result=await addUserModel(name,email,password)
-        return res.json({
-            msg:'created',
-            status:201,
-            
-        })
+        const { name, email, password } = req.body;
+        const result = await addUserModel(name, email, password);
+
+       
+        const insertedUser = { id: result.insertId, name, email, password };
+
+        return res.status(201).json({
+            msg: 'created',
+            status: 201,
+            data: insertedUser
+        });
     } catch (error) {
-         return res.json({
-            msg:error,
-            status:500
-        })
+        return res.status(500).json({
+            msg: error.message,
+            status: 500
+        });
     }
-}
+};
+
 export const deleteUser= async(req,res)=>{
     try {
         const {id}=req.params;
@@ -67,7 +72,7 @@ export const editUser=async(req,res)=>{
                 msg:"huj na id"
             })
         }
-        const edit=await editUserModel(name,email,password,id)
+        const edit=await editUserModel(id,name,email,password)
         return res.json({
             msg:"edited successfully",
             status:200,
