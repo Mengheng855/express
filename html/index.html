@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Table</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+
+<body>
+
+    <div class="container mt-5 p-4">
+        <div class="table-responsive">
+            <table class="table table-hover text-center">
+                <!-- Button trigger modal -->
+                <button type="button" id="add" class="btn btn-primary float-end" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                    +Add User
+                </button>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Password</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="data"></tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <!-- Modal -->
+    <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">Modal title</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form action="" id="form">
+                <div class="modal-body">
+                        <div class="mb-2">
+                            <label for="" class="form-labe">Name</label>
+                            <input class="form-control" id="name" type="text" placeholder="Enter your name...">
+                        </div>
+                        <div class="mb-2">
+                            <label for="" class="form-labe">Email</label>
+                            <input class="form-control" id="email" type="email" placeholder="Enter your email...">
+                        </div>
+                        <div class="mb-2">
+                            <label for="" class="form-labe">password</label>
+                            <input class="form-control" id="password" type="password" placeholder="Enter your password...">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" id="btnSave" class="btn btn-primary">Save</button>
+                        <button type="button" id="btnedit" class="btn btn-warning">edit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+<script>
+    $(document).ready(function(){
+        $('#add').click(function(){
+            $('#btnedit').hide()
+            $('#btnSave').show()
+            $('#form')[0].reset()
+            $('#exampleModalLabel').text('Add User')
+        })
+        $.ajax({
+            url:"http://localhost:3000/getUser",
+            method:"GET",
+            success:function(res){
+                console.log(res);
+                
+                let tbody=$('#data')
+                tbody.html("")
+                res.data.map((user,index)=>{
+                    tbody.append(`
+                        <tr data-id="${user.id}">
+                            <td >${index + 1}</td>
+                            <td>${user.name}</td>
+                            <td>${user.email}</td>
+                            <td>${user.password}</td>
+                            <td>
+                                <button class="btn btn-outline-danger" id="delete">Delete</button>
+                                <button class="btn btn-outline-warning" id="edit" data-bs-toggle="modal" data-bs-target="#exampleModal">Edit</button>
+                            </td>
+                        </tr>
+                    `)
+                })
+            },
+            error:function(err){
+                console.error(err);
+            }
+        })
+        $('#btnSave').click(function(){
+            const name=$('#name').val()
+            const email=$('#email').val()
+            const password=$('#password').val()
+            $.ajax({
+                url:"http://localhost:3000/addUser",
+                method:"POST",
+                contentType:"application/json",
+                data:JSON.stringify({
+                    name,
+                    email,
+                    password
+                }),
+                success:function(res){
+                    $('#form')[0].reset()
+                    $("#exampleModal").modal("hide");
+                    let rowCount = $("#data tr").length + 1;
+                    const user = res.data; 
+                   
+                    
+                    $('#data').append(`
+                        <tr data-id="${user.id}">
+                            <td>${rowCount}</td>
+                            <td>${name}</td>
+                            <td>${email}</td>
+                            <td>${password}</td>
+                            <td>
+                                <button class="btn btn-outline-danger" id="delete" >Delete</button>
+                                <button class="btn btn-outline-warning" id="edit" data-bs-toggle="modal" data-bs-target="#exampleModal" >Edit</button>
+                            </td>
+                        </tr>
+                    `)
+                },
+                error:function(err){
+                    console.error(err)
+                }
+            })
+        })
+        $(document).on('click','#delete',function(){
+            let row=$(this).closest("tr")
+            let id=row.data('id')
+            const isconfirm=confirm("jg delete menten men??")
+            if(!isconfirm) return;
+            $.ajax({
+                url:`http://localhost:3000/deleteUser/${id}`,
+                method:"DELETE",
+                success:function(res){
+                    row.remove()
+                },
+                error:function(err){
+                    console.error(err);
+                    
+                }
+            })
+        })
+        $(document).on('click','#edit',function(){
+            $('#btnSave').hide()
+            $('#btnedit').show()
+            $('#exampleModalLabel').text('Edit User')
+            let row=$(this).closest("tr")
+            let id=row.data('id')
+            let name=row.find('td:eq(1)').text().trim()
+            let email=row.find('td:eq(2)').text().trim()
+            let password=row.find('td:eq(3)').text().trim()
+
+            $('#name').val(name)
+            $('#email').val(email)
+            $('#password').val(password)
+            $('#btnedit').click(function(){
+                const name=$('#name').val()
+                const email=$('#email').val()
+                const password=$('#password').val()
+                $.ajax({
+                    url:`http://localhost:3000/editUser/${id}`,
+                    method:'PATCH',
+                    contentType:"application/json",
+                    data:JSON.stringify({
+                        name,
+                        email,
+                        password
+                    }),
+                    success:function(res){
+                        $('#form')[0].reset()
+                        $("#exampleModal").modal("hide");
+                        row.find('td:eq(1)').text(name)
+                        row.find('td:eq(2)').text(email)
+                        row.find('td:eq(3)').text(password)
+                    }
+                })
+            })
+        })
+    })
+</script>
